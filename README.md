@@ -24,10 +24,10 @@ cargo run -- filepath package
 3. Open a pull request
 
 ## TODO
-[x] Pull and parse the `Cargo.toml` files for all given repos.
-[x] Check if package is a dependency on the project.
-[ ] Check if package version matches
-[ ] If package version does not match, is it less than or greater than the mentioned version
-[ ] If version not satisfied, update to latest version and create a pull request
+- [x] Pull and parse the `Cargo.toml` files for all given repos.
+- [x] Check if package is a dependency on the project.
+- [ ] Check if package version matches
+- [ ] If package version does not match, is it less than or greater than the mentioned version
+- [ ] If version not satisfied, update to latest version and create a pull request
 
 I don't like veg biryani...
