@@ -97,8 +97,13 @@ async fn main() {
         let cargo_from_master = get_text(raw_url_master_str).await.unwrap();
         let cargo_from_main = get_text(raw_url_main_str).await.unwrap();
 
+        // If this isn't a rust repo, continue
+        if cargo_from_master == "404: Not Found" && cargo_from_main == "404: Not Found" { continue; }
+
         // Parse the tomls
-        let parsed = if cargo_from_master == "404: Not Found" { cargo_from_main.parse::<Value>().unwrap() } else { cargo_from_master.parse::<Value>().unwrap() };
+        let parsed = if cargo_from_master == "404: Not Found" {
+            cargo_from_main.parse::<Value>().unwrap()
+        } else { cargo_from_master.parse::<Value>().unwrap() };
 
         // Convert the dependencies section to a string to be queried
         let dependencies = &parsed["dependencies"];
