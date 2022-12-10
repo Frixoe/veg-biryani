@@ -12,6 +12,7 @@ use std::env;
 use std::fs;
 use url::{Url};
 use toml::Value;
+use versions::{Version};
 
 // Get the html content of the page being requested
 async fn get_text(text: &str) -> Result<String, Box<dyn Error>> {
@@ -20,6 +21,12 @@ async fn get_text(text: &str) -> Result<String, Box<dyn Error>> {
         .text()
         .await?;
     Ok(resp.to_string())
+}
+
+// The version 
+fn get_version_from_string(ver_str: &str) -> Version {
+    let version_vec: Vec<&str> = ver_str.split("\"").collect();
+    Version::new(version_vec[1]).unwrap()
 }
  
 #[tokio::main]
@@ -42,8 +49,15 @@ async fn main() {
     // Get the file path
     let file_path = &args[1];
 
-    // Get the package name
-    let package = &args[2];
+    // Get the package name and the version
+    // Split the input string 
+    let package_with_version: &Vec<&str> = &args[2].split("@").collect();
+
+    // Package name
+    let package = &package_with_version[0];
+
+    // Package version string
+    let package_version = Version::new(&package_with_version[1]).unwrap();
 
     // Read the contents of the file
     let contents = fs::read_to_string(file_path).expect("Something went wrong while reading the file...");
@@ -51,8 +65,8 @@ async fn main() {
     // Collect the links from the file
     let mut links: Vec<&str> = contents.split("\n").collect();
 
-    // Remove last element as it is always empty and will cause issues with url parsing
-    links.remove(links.len() - 1);
+    // Remove last element as it's an empty string and will cause issues with url parsing
+    if links[links.len() - 1] == "" { links.remove(links.len() - 1); }
 
     // If no links then exit
     if links.len() <= 0 {
@@ -87,7 +101,8 @@ async fn main() {
         let parsed = if cargo_from_master == "404: Not Found" { cargo_from_main.parse::<Value>().unwrap() } else { cargo_from_master.parse::<Value>().unwrap() };
 
         // Convert the dependencies section to a string to be queried
-        let dep_str = parsed["dependencies"].to_string();
+        let dependencies = &parsed["dependencies"];
+        let dep_str = dependencies.to_string();
 
         // Strings to search for 
         let search_1 = format!("{} ", package);
@@ -95,8 +110,33 @@ async fn main() {
 
         // If the package is contained in the dependencies tell the user
         if dep_str.contains(&search_1) || dep_str.contains(&search_2) {
+            // Get the package data from the dependency list of the repo
+            let package_data = &dependencies[package];
+
+            // Convert to string to query easier
+            let package_data_str = package_data.to_string(); 
+
+            // Get the version found in the dependencies
+            let found_package_version = if package_data_str.contains("version = ") {
+                let version = &package_data["version"];
+                get_version_from_string(&version.to_string())
+            } else { // Otherwise just get the version
+                get_version_from_string(&package_data_str)
+            };
+
+            // Status of the repo package compared to the version given
+            let status_str = if package_version < found_package_version {
+                "up to date"
+            } else if package_version > found_package_version {
+                "outdated" 
+            } else {
+                "equal" 
+            };
+
             // Package found
-            println!("===> {} found in {}", package, link);
+            println!("===> {} {} in {}", package, status_str, link);
+
+            // TODO: Open a pull request on the repo
         } else {
             // lol
             println!("{} not found in {}", package, link);
