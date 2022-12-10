@@ -11,10 +11,16 @@ At the moment, this project does none of that.
 
 ## Run Locally
 
-Clone the repo and run the following command:
+Clone the repo and run the following command to add veg-biryani to path:
 ```
-cargo run -- filepath package
+cargo install --path . 
 ```
+Run the command 
+
+```
+veg-biryani filepath package
+```
+
 > `filepath` is the path of the file containing the links separated by new line characters and `package` is the name of the package being searched.
 
 ## Pls Contribute
